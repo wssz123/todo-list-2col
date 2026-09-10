@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>今日待办清单</title>
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: "Comic Sans MS", "Segoe UI", system-ui, sans-serif;
+  }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ffd6e8, #d6f0ff, #e8d6ff, #fff4b8);
+    background-size: 400% 400%;
+    animation: gradientBG 10s ease infinite;
+    padding-bottom: 40px;
+  }
+
+  @keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .app {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 24px 18px 10px;
+  }
+
+  h1 {
+    text-align: center;
+    color: #ff5e87;
+    font-size: 32px;
+    margin-bottom: 8px;
+    text-shadow: 2px 2px 0 #fff, 4px 4px 0 #ffb3d1;
+    letter-spacing: 2px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #7b6cff;
+    font-size: 14px;
+    margin-bottom: 18px;
+    font-weight: bold;
+  }
+
+  /* 固定添加框 */
+  .add-box {
+    position: sticky;
+    top: 12px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border: 3px solid #fff;
+    border-radius: 22px;
+    box-shadow: 0 10px 30px rgba(255, 107, 157, 0.25);
+    padding: 14px;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .add-box input {
+    flex: 1;
+    border: 3px solid #ffd1e8;
+    border-radius: 16px;
+    padding: 12px 14px;
+    font-size: 15px;
+    outline: none;
+    background: #fff;
+    color: #555;
+    transition: 0.2s;
+  }
+
+  .add-box input:focus {
+    border-color: #ff7ab6;
+    box-shadow: 0 0 0 4px rgba(255, 122, 182, 0.2);
+  }
+
+  .add-box button {
+    border: none;
+    border-radius: 16px;
+    padding: 12px 18px;
+    font-size: 15px;
+    font-weight: bold;
+    color: white;
+    background: linear-gradient(135deg, #ff7ab6, #ffb347);
+    cursor: pointer;
+    box-shadow: 0 6px 14px rgba(255, 122, 182, 0.4);
+    transition: 0.2s;
+    white-space: nowrap;
+  }
+
+  .add-box button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(255, 122, 182, 0.5);
+  }
+
+  /* 任务列表改为两列布局 */
+  .todo-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .todo-item {
+    background: #fff;
+    border-radius: 20px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 6px 18px rgba(180, 140, 255, 0.15);
+    border: 3px solid transparent;
+    transition: 0.25s;
+    animation: slideIn 0.4s ease;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .todo-item:nth-child(1) { border-color: #ffd166; }
+  .todo-item:nth-child(2) { border-color: #b5ead7; }
+  .todo-item:nth-child(3) { border-color: #c7ceea; }
+  .todo-item:nth-child(4) { border-color: #ffb3ba; }
+  .todo-item:nth-child(5) { border-color: #bae1ff; }
+  .todo-item:nth-child(6) { border-color: #ffffba; }
+  .todo-item:nth-child(7) { border-color: #ffdfba; }
+  .todo-item:nth-child(8) { border-color: #e0c3fc; }
+  .todo-item:nth-child(9) { border-color: #a0e7e5; }
+  .todo-item:nth-child(10) { border-color: #ffc9de; }
+
+  .todo-item:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 12px 24px rgba(255, 122, 182, 0.25);
+  }
+
+  .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: linear-gradient(135deg, #fff6c2, #ffd166);
+    border: 3px solid #fff;
+    box-shadow: 0 4px 10px rgba(255, 179, 71, 0.4);
+    flex-shrink: 0;
+  }
+
+  .todo-item.done .avatar {
+    background: linear-gradient(135deg, #b5ead7, #7cd9a8);
+    box-shadow: 0 4px 10px rgba(124, 217, 168, 0.4);
+  }
+
+  /* 小动物弹跳动画 */
+  .avatar.animate {
+    animation: animalPop 0.5s ease;
+  }
+  @keyframes animalPop {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.4) rotate(-10deg); }
+    60% { transform: scale(1.2) rotate(10deg); }
+    100% { transform: scale(1); }
+  }
+
+  .text {
+    flex: 1;
+    font-size: 15px;
+    color: #4a4a6a;
+    font-weight: 600;
+    word-break: break-word;
+  }
+
+  .todo-item.done .text {
+    color: #9a9ab5;
+    text-decoration: line-through;
+  }
+
+  .actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink:0;
+  }
+
+  .btn {
+    border: none;
+    border-radius: 12px;
+    padding: 6px 9px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .complete-btn {
+    background: linear-gradient(135deg, #7cd9a8, #57c49b);
+    color: white;
+  }
+
+  .complete-btn:hover {
+    background: linear-gradient(135deg, #57c49b, #45a584);
+  }
+
+  .delete-btn {
+    background: linear-gradient(135deg, #ff9a9a, #ff6b6b);
+    color: white;
+  }
+
+  .delete-btn:hover {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+  }
+
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #9a9ab5;
+    padding: 30px 0;
+    font-size: 14px;
+  }
+
+  /* 手机自动变回单列 */
+  @media (max-width:640px){
+    .todo-list{
+      grid-template-columns:1fr;
+    }
+    .app{
+      max-width:100%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <h1>✨ 今日待办清单 ✨</h1>
+  <div class="subtitle">今天也要元气满满地完成任务呀！</div>
+
+  <!-- 固定添加框 -->
+  <div class="add-box">
+    <input id="txt" type="text" placeholder="添加新的待办事项..." />
+    <button onclick="add()">添加</button>
+  </div>
+
+  <div class="todo-list" id="list"></div>
+</div>
+
+<script>
+  const animalAvatars = ["🐶", "🐱", "🐰", "🐹", "🦊", "🐼", "🐨", "🦁", "🐸", "🐵", "🐯", "🐮"];
+
+  let data = [
+    { text: "完成数学作业", done: true },
+    { text: "整理课堂笔记", done: true },
+    { text: "背20个英语单词", done: false },
+    { text: "阅读课外书30分钟", done: false },
+    { text: "练习编程代码", done: false },
+    { text: "帮妈妈做家务", done: false },
+    { text: "运动跳绳100下", done: false },
+    { text: "听英语听力", done: false },
+    { text: "预习明天课程", done: false },
+    { text: "整理书包和桌面", done: false }
+  ];
+
+  const listDom = document.getElementById("list");
+  const inputDom = document.getElementById("txt");
+
+  // 合成 Yes 上扬确认音效
+  function playSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(523, ctx.currentTime);
+      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.03);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.35);
+    } catch(e) {
+      console.log("音效异常",e);
+    }
+  }
+
+  function render() {
+    listDom.innerHTML = "";
+    if (data.length === 0) {
+      listDom.innerHTML = '<div class="empty">还没有待办事项，快来添加一个吧！</div>';
+      return;
+    }
+    data.forEach((item, idx) => {
+      const div = document.createElement("div");
+      div.className = "todo-item" + (item.done ? " done" : "");
+      const avatar = item.done ? animalAvatars[idx % animalAvatars.length] : "⏰";
+      div.innerHTML = `
+        <div class="avatar">${avatar}</div>
+        <div class="text">${item.text}</div>
+        <div class="actions">
+          <button class="btn complete-btn" onclick="toggle(${idx})">
+            ${item.done ? "撤销" : "完成"}
+          </button>
+          <button class="btn delete-btn" onclick="del(${idx})">删除</button>
+        </div>
+      `;
+      listDom.appendChild(div);
+    });
+  }
+
+  function toggle(i) {
+    data[i].done = !data[i].done;
+    render();
+    if(data[i].done){
+      playSound();
+      setTimeout(()=>{
+        const avatars = document.querySelectorAll(".avatar");
+        if(avatars[i]) avatars[i].classList.add("animate");
+      },50)
+    }
+  }
+
+  function add() {
+    const text = inputDom.value.trim();
+    if (!text) return;
+    data.push({ text, done: false });
+    inputDom.value = "";
+    render();
+  }
+
+  function del(i) {
+    data.splice(i, 1);
+    render();
+  }
+
+  inputDom.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") add();
+  });
+
+  render();
+</script>
+
+</body>
+</html>
